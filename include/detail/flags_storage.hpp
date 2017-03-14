@@ -1,3 +1,9 @@
+//
+// MIT License
+// Copyright (c) 2017 Roman Orlov
+// See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
+//
+
 #ifndef _FLAGS_STORAGE_HPP_
 #define _FLAGS_STORAGE_HPP_
 

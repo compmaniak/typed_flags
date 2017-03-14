@@ -1,3 +1,9 @@
+//
+// MIT License
+// Copyright (c) 2017 Roman Orlov
+// See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
+//
+
 #ifndef _TYPED_FLAGS_HPP_
 #define _TYPED_FLAGS_HPP_
 
