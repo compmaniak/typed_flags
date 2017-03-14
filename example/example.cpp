@@ -1,3 +1,9 @@
+//
+// MIT License
+// Copyright (c) 2017 Roman Orlov
+// See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
+//
+
 #include "../include/typed_flags.hpp"
 #include <cassert>
 
