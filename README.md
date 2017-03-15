@@ -37,6 +37,13 @@ assert( (wolf.all<eats_meat, has_tail>()) );
 assert( (wolf.any<eats_meat, has_tail, eats_grass>()) );
 assert( (wolf.none<eats_grass>()) );
 ```
+Extract flag values
+```cpp
+flag<eats_meat> f1;
+flag<has_tail> f2;
+wolf.get(f1, f2);
+assert( f1 && f2 );
+```
 Like std::bitset create flags from integers or strings and convert vice versa
 ```cpp
 auto a1 = animal{3};
