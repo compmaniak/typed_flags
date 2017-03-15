@@ -141,6 +141,12 @@ int main()
     assert( unknown != rabbit );
     unknown.set(flag<eats_meat>{0}, flag<eats_grass>{1});
     assert( unknown == rabbit );
+    flag<eats_meat> f1;
+    flag<eats_grass> f2;
+    flag<has_tail> f3;
+    unknown.get(f1, f2, f3);
+    assert( f2 && f3 );
+    assert( !f1 );
     
     auto a1 = animal{"111"} & animal{"010"};
     assert( a1.to_string() == "010" );

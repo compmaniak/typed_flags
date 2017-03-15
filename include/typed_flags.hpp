@@ -18,6 +18,17 @@
 template<typename T>
 struct flag
 {
+    flag(): value(false)
+    {}
+    
+    flag(bool v): value(v)
+    {}
+    
+    explicit operator bool () const noexcept
+    {
+        return value;
+    }
+    
     bool value;
 };
 
@@ -107,6 +118,12 @@ public:
     bool all() const noexcept
     {
         return (... && this->get_bit(index<T>()));
+    }
+    
+    template<typename... T>
+    void get(flag<T>&... flags) const noexcept
+    {
+        (..., (flags.value = this->get_bit(index<T>())));
     }
     
     //
