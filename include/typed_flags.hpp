@@ -11,31 +11,55 @@
 #include "detail/meta.hpp"
 #include "detail/functional.hpp"
 
-//
-// Helper class for human-readable construction.
-// Consider flag<foo>{1} or flag<bar>{0}
-//
+//!
+//! @brief Single flag container.
+//!
+//! Simple typed wrapper around bool variable. Can be converted to/from bool.
+//! @param T flag type.
+//!
 template<typename T>
-struct flag
+class flag
 {
+    bool value;
+    
+public:
+
+    //! @name Creation
+    //! @{
+        
     flag(): value(false)
     {}
     
     flag(bool v): value(v)
     {}
     
-    explicit operator bool () const noexcept
+    //! @}
+    //! @name Conversions
+    //! @{
+    
+    operator bool () const noexcept
     {
         return value;
     }
     
-    bool value;
+    flag<T>& operator = (bool v) noexcept
+    {
+        value = v;
+        return *this;
+    }
+    
+    //! @}
 };
 
-//
-// Templated frontend to storage implementation.
-// It provides type safety and translates types to corresponding indexes.
-//
+//!
+//! @brief Type-safe flag container.
+//!
+//! Templated frontend to raw bit storage. Allows type safe bit manipulations
+//! translating user defined types to corresponding indexes.
+//! @param Args... user defined types.
+//!
+//! @note Types can be incomplete.
+//!
 template<typename... Args>
 class typed_flags: private detail::flags_storage<sizeof...(Args)>
 {
@@ -60,30 +84,44 @@ public:
     using parent_type::all;
     using parent_type::to_integral;
     using parent_type::to_string;
-    
-    static constexpr size_t length = sizeof...(Args);
-    
-    template<typename T>
-    static constexpr size_t index() noexcept
-    {
-        return detail::get_index<T, layout_type>();
-    }
 
+    //! @name Creation
+    //! @{
+    
+    //!
+    //! Sets all flags to zero.
+    //!
     typed_flags() = default;
     
+    //!
+    //! Sets concrete flags to corresponding values.
+    //! @param flag<T>... flag values.
+    //!
     template<typename... T>
     explicit typed_flags(flag<T>... flags) noexcept
     {
         set(flags...);
     }
     
-    //
-    // Forwarded constructors
-    //
+    //!
+    //! Loads flag values from integral number.<br> Least significant bit
+    //! corresponds to the first parameter of the class template.
+    //! Remaining flags are initialized to zeros.
+    //! @param data source integral number.
+    //!
     explicit typed_flags(unsigned long long data) noexcept
         : parent_type(data)
     {}
     
+    //!
+    //! Loads flag values from characters.<br> Rightmost character corresponds to 
+    //! the first parameter of the class template. Remaining flags are initialized to zeros.
+    //! @param str string used to initialize flags.
+    //! @param n number of characters to read from string (optional).
+    //! @param zero character representing unset flag (optional).
+    //! @param one character representing set flag (optional).
+    //! @throws std::invalid_argument if character is neither zero nor one.
+    //!
     template<class CharT>
     explicit typed_flags(const CharT* str, typename 
         std::basic_string<CharT>::size_type n = std::basic_string<CharT>::npos,
@@ -93,77 +131,175 @@ public:
                       : detail::string_view<CharT>(str, n), zero, one)
     {}
     
-    //
-    // Element access 
-    //
+    //! @}
+    //! @name Element access
+    //! @{
+    
+    //!
+    //! Returns the value of the specified flag.
+    //! @param T flag type.
+    //! @returns true if the flag is set, false otherwise.
+    //!
     template<typename T>
     bool test() const noexcept
     {
         return this->get_bit(index<T>());
     }
         
+    //!
+    //! Checks that every specified flag is unset.
+    //! @param T... flag types.
+    //! @returns true if every specified flag is unset, false otherwise.
+    //! @note Invoking none() without template parameters checks all flags are equal to zero.
+    //!
     template<typename... T>
     bool none() const noexcept
     {
         return (... && !this->get_bit(index<T>()));
     }
     
+    //!
+    //! Checks that at least one of specified flags is set.
+    //! @param T... flag types.
+    //! @returns true if one of specified flags is set, false otherwise.
+    //! @note Invoking any() without template parameters checks at least one of all flags is set.
+    //!
     template<typename... T>
     bool any() const noexcept
     {
         return !none<T...>();
     }
     
+    //!
+    //! Checks that every specified flag is set.
+    //! @param T... flag types.
+    //! @returns true if every specified flag is set, false otherwise.
+    //! @note Invoking all() without template parameters checks all flags are equal to one.
+    //!
     template<typename... T>
     bool all() const noexcept
     {
         return (... && this->get_bit(index<T>()));
     }
     
+    //!
+    //! Extracts values of specified flags to variables.
+    //! @param flag<T>&... flag variables to store result.
+    //!
     template<typename... T>
     void get(flag<T>&... flags) const noexcept
     {
-        (..., (flags.value = this->get_bit(index<T>())));
+        (..., (flags = this->get_bit(index<T>())));
     }
     
-    //
-    // Capacity
-    //
+    //! @}
+    //! @name Capacity
+    //! @{
+        
+    //!
+    //! Number of flags i.e. template parameters.
+    //!
+    static constexpr size_t length = sizeof...(Args);
+    
+    //!
+    //! Get the number of flags.
+    //! @returns typed_flags<Args...>::length
+    //!
     constexpr size_t size() const noexcept
     {
         return length;
     }
     
-    //
-    // Modifiers
-    //
+    //!
+    //! Get index of specified flag.
+    //! @param T flag type.
+    //! @returns size_t
+    //!
+    template<typename T>
+    static constexpr size_t index() noexcept
+    {
+        return detail::get_index<T, layout_type>();
+    }
+    
+    //! @}
+    //! @name Modifiers
+    //! @{
+    
+    //!
+    //! Sets specified flags from flag variables.
+    //! @param flag<T>... flag variables to load from.
+    //!
     template<typename... T>
     void set(flag<T>... flags) noexcept
     {
-        (..., this->set_bit(index<T>(), flags.value));
+        (..., this->set_bit(index<T>(), flags));
     }
     
+    //!
+    //! Changes specified flags.
+    //! @param T... flag types.
+    //! @param value sets flags to this value.
+    //!
     template<typename... T>
     void set(bool value = true) noexcept
     {
         (..., this->set_bit(index<T>(), value));
     }
     
+    //!
+    //! Unsets specified flags.
+    //! @param T... flag types.
+    //!
     template<typename... T>
     void reset() noexcept
     {
         (..., this->set_bit(index<T>(), false));
     }
     
+    //!
+    //! Reverts specified flags i.e. zeros becomes ones and vice versa.
+    //! @param T... flag types.
+    //!
     template<typename... T>
     void flip() noexcept
     {
         (..., this->set_bit(index<T>(), !this->get_bit(index<T>())));
     }
+    
+    //! @}
+    //! @name Conversions
+    //! @{
+    
+    //!
+    //! Converts flags to integral number.<br>
+    //! Least significant bit corresponds to the first parameter of the class template.
+    //! @param T target integral type.
+    //! @returns integral number of type T.
+    //! @note If type T can't hold all flags static assertion fails.
+    //!
+#ifdef DOXYGEN_WORKAROUND
+    template<typename T>
+    T to_integral() const noexcept;
+#endif
+    
+    //!
+    //! Converts flags to standard string.<br>
+    //! Rightmost character corresponds to the first parameter of the class template.
+    //! @param zero character representing unset flag (optional).
+    //! @param one character representing set flag (optional).
+    //! @returns std::basic_string<CharT, Traits, Allocator> 
+    //!
+#ifdef DOXYGEN_WORKAROUND
+    template<class CharT = char,
+             class Traits = std::char_traits<CharT>,
+             class Allocator = std::allocator<CharT>> 
+    auto to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const;
+#endif
+    
+    //! @}    
+    //! @name Logical member operators
+    //! @{
 
-    //
-    // Logical member operators
-    //
     bool operator == (this_type const& other) const noexcept
     {
         return this->is_equal(other);
@@ -174,9 +310,10 @@ public:
         return !this->is_equal(other);
     }
     
-    //
-    // Bitwise member operators
-    //
+    //! @}
+    //! @name Bitwise member operators
+    //! @{
+    
     this_type& operator &= (this_type const& other ) noexcept
     {
         this->template bitwise<detail::bit_and>(other);
@@ -201,11 +338,14 @@ public:
         tmp.flip();
         return tmp;
     }
+    
+    //! @}
 };
 
-//
-// Non-member bitwise operators
-//
+//! @name Bitwise non-member operators
+//! @relates typed_flags
+//! @{
+
 template<typename... Args>
 typed_flags<Args...> operator & ( typed_flags<Args...> const& lhs, typed_flags<Args...> const& rhs )
 {
@@ -226,5 +366,7 @@ typed_flags<Args...> operator ^ ( typed_flags<Args...> const& lhs, typed_flags<A
     typed_flags<Args...> res = lhs;
     return res ^= rhs;
 }
+
+//! @}
 
 #endif

@@ -161,10 +161,9 @@ public:
     template<class CharT = char,
              class Traits = std::char_traits<CharT>,
              class Allocator = std::allocator<CharT>>
-    std::basic_string<CharT, Traits, Allocator> 
-    to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const
+    auto to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const
     {
-        decltype(to_string(zero, one)) res;
+        std::basic_string<CharT, Traits, Allocator> res;
         res.reserve(N);
         for (size_t i = N; i > 0;)
             res += get_bit(--i) ? one : zero;

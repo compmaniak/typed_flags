@@ -135,6 +135,13 @@ int main()
     unknown &= animal{4};
     assert( unknown.to_integral<int>() == 4 );
     
+    flag<int> int_flag;
+    assert( !int_flag );
+    int_flag = true;
+    assert( int_flag );
+    int_flag = false;
+    assert( !int_flag );
+    
     unknown = animal{flag<has_tail>{1}, flag<eats_grass>{1}};
     assert( unknown == rabbit );
     unknown.set(flag<eats_meat>{1});
