@@ -72,7 +72,7 @@ template<typename T, typename U>
 struct index_getter;
 
 //
-// Type is not found in sequence, so its index is -1
+// List is empty, so type index is -1
 //
 template<typename T>
 struct index_getter<T, name_index_sequence<empty>>
@@ -80,18 +80,31 @@ struct index_getter<T, name_index_sequence<empty>>
     static constexpr size_t value = -1;
 };
 
+struct index
+{
+    size_t value = -1;
+    
+    index() = default;
+    
+    constexpr explicit index(size_t v): value(v) {}
+    
+    constexpr operator size_t() const { return value; }
+};
+
+constexpr index operator << (index const& lhs, index const& rhs)
+{
+    return lhs.value < rhs.value ? lhs : rhs;
+}
+
 //
-// Find type by matching it with the head of the list
-// and expand list tail if not matched
-// TODO think about fold-expressions to avoid compile-time recursion
+// Find type by matching it with each element in the list
 //
-template<typename T, typename Head, typename... Tail>
-struct index_getter<T, name_index_sequence<Head, Tail...>>
+template<typename T, typename... Args>
+struct index_getter<T, name_index_sequence<Args...>>
 {
     static constexpr size_t value = 
-        std::is_same<T, typename Head::type>::value 
-            ? Head::index 
-            : index_getter<T, name_index_sequence<Tail...>>::value;
+        (index{} << ... << (std::is_same<T, typename Args::type>::value 
+            ? index{Args::index} : index{}));
 };
 
 //
