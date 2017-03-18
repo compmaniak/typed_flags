@@ -1,6 +1,6 @@
 # Typed flags
 [![Build Status](https://travis-ci.org/compmaniak/typed_flags.svg?branch=master)](https://travis-ci.org/compmaniak/typed_flags)
-[![Try online](https://img.shields.io/badge/Try-online-4DB6AC.svg)](http://melpon.org/wandbox/permlink/moRMAA1Pu2DxWAen)
+[![Try online](https://img.shields.io/badge/Try-online-4DB6AC.svg)](http://melpon.org/wandbox/permlink/55g1czUjwSFO8LS1)
 
 Type-safe and human-readable set of bool flags
 
@@ -51,6 +51,10 @@ auto a2 = animal{"101"};
 assert( a1.to_integral<int>() == 3 );
 assert( a2.to_string() == "101" );
 ```
+
+## Documentation
+
+More detailed info you can find ![here](https://compmaniak.github.io/typed_flags/classtyped__flags.html).
 
 ## Requirements
 
