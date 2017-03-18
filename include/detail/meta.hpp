@@ -88,7 +88,7 @@ struct index
     
     constexpr explicit index(size_t v): value(v) {}
     
-    constexpr operator size_t() const { return value; }
+    constexpr explicit operator size_t() const { return value; }
 };
 
 constexpr index operator << (index const& lhs, index const& rhs)
@@ -102,9 +102,9 @@ constexpr index operator << (index const& lhs, index const& rhs)
 template<typename T, typename... Args>
 struct index_getter<T, name_index_sequence<Args...>>
 {
-    static constexpr size_t value = 
-        (index{} << ... << (std::is_same<T, typename Args::type>::value 
-            ? index{Args::index} : index{}));
+    static constexpr size_t value = static_cast<size_t>(
+        (index{} << ... << (std::is_same<T, typename Args::type>
+            ::value ? index{Args::index} : index{})));
 };
 
 //
