@@ -54,7 +54,7 @@ assert( a2.to_string() == "101" );
 
 ## Documentation
 
-More detailed info you can find ![here](https://compmaniak.github.io/typed_flags/classtyped__flags.html).
+More detailed info you can find [here](https://compmaniak.github.io/typed_flags/classtyped__flags.html).
 
 ## Requirements
 
