@@ -4,8 +4,8 @@
 // See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
 //
 
-#ifndef _FLAGS_STORAGE_HPP_
-#define _FLAGS_STORAGE_HPP_
+#ifndef _TFL_FLAGS_STORAGE_HPP_
+#define _TFL_FLAGS_STORAGE_HPP_
 
 #include <cstddef>
 #include <array>
@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <experimental/string_view>
 
-namespace detail
+namespace tfl::detail
 {
 
 template<typename T>
@@ -195,6 +195,6 @@ private:
     std::array<bank_type, bank_count> m_data;
 };
 
-} // namespace detail
+} // namespace tfl::detail
 
 #endif

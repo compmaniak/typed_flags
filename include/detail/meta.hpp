@@ -4,13 +4,13 @@
 // See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
 //
 
-#ifndef _META_HPP_
-#define _META_HPP_
+#ifndef _TFL_META_HPP_
+#define _TFL_META_HPP_
 
 #include <cstddef>
 #include <utility>
 
-namespace detail
+namespace tfl::detail
 {
 
 //
@@ -118,6 +118,6 @@ constexpr size_t get_index()
     return getter::value;
 }
 
-} // namespace detail
+} // namespace tfl::detail
 
 #endif

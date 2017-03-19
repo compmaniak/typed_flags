@@ -7,6 +7,8 @@
 #include "../include/typed_flags.hpp"
 #include <cassert>
 
+using namespace tfl;
+
 class has_tail;
 class eats_meat;
 class eats_grass;

@@ -4,15 +4,15 @@
 // See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
 //
 
-#ifndef _FUNCTIONAL_HPP_
-#define _FUNCTIONAL_HPP_
+#ifndef _TFL_FUNCTIONAL_HPP_
+#define _TFL_FUNCTIONAL_HPP_
 
 //
 // Including <functional> for bitwise operations is overkill,
 // so implement them manually
 //
 
-namespace detail
+namespace tfl::detail
 {
 
 struct bit_or
@@ -42,6 +42,6 @@ struct bit_xor
     }
 };
 
-} // namespace detail
+} // namespace tfl::detail
 
 #endif

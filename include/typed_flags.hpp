@@ -4,12 +4,15 @@
 // See accompanying file LICENSE or copy at http://opensource.org/licenses/MIT
 //
 
-#ifndef _TYPED_FLAGS_HPP_
-#define _TYPED_FLAGS_HPP_
+#ifndef _TFL_TYPED_FLAGS_HPP_
+#define _TFL_TYPED_FLAGS_HPP_
 
 #include "detail/flags_storage.hpp"
 #include "detail/meta.hpp"
 #include "detail/functional.hpp"
+
+namespace tfl
+{
 
 //!
 //! @brief Single flag container.
@@ -368,5 +371,7 @@ typed_flags<Args...> operator ^ ( typed_flags<Args...> const& lhs, typed_flags<A
 }
 
 //! @}
+
+} // namespace tfl
 
 #endif
