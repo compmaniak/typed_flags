@@ -137,10 +137,12 @@ int main()
     unknown &= animal{4};
     assert( unknown.to_integral<int>() == 4 );
     
+    constexpr flag<int> const_int_flag_0;
+    constexpr flag<int> const_int_flag_1{1};
     flag<int> int_flag;
-    assert( !int_flag );
+    assert( !int_flag && int_flag == const_int_flag_0 );
     int_flag = true;
-    assert( int_flag );
+    assert( int_flag && int_flag == const_int_flag_1 );
     int_flag = false;
     assert( !int_flag );
     

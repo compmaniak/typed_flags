@@ -29,17 +29,17 @@ public:
     //! @name Creation
     //! @{
         
-    flag(): value(false)
+    constexpr flag(): value(false)
     {}
     
-    flag(bool v): value(v)
+    constexpr flag(bool v): value(v)
     {}
     
     //! @}
     //! @name Conversions
     //! @{
     
-    operator bool () const noexcept
+    constexpr operator bool () const noexcept
     {
         return value;
     }
