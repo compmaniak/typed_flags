@@ -180,10 +180,9 @@ public:
         return m_data == other.m_data;
     }
     
-    template<typename BinaryFn>
-    void bitwise(flags_storage<N> const& other) noexcept
+    template<typename BinFn>
+    void bitwise(flags_storage<N> const& other, BinFn&& fn) noexcept
     {
-        BinaryFn fn;
         auto it1 = m_data.begin();
         auto it2 = other.m_data.begin();
         for (auto last = m_data.end(); it1 != last; ++it1, ++it2)

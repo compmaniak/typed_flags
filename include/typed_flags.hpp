@@ -9,7 +9,6 @@
 
 #include "detail/flags_storage.hpp"
 #include "detail/meta.hpp"
-#include "detail/functional.hpp"
 
 namespace tfl
 {
@@ -319,19 +318,25 @@ public:
     
     this_type& operator &= (this_type const& other ) noexcept
     {
-        this->template bitwise<detail::bit_and>(other);
+        this->template bitwise(other, [](auto x, auto y){
+            return x & y;
+        });
         return *this;
     }
     
     this_type& operator |= (this_type const& other ) noexcept
     {
-        this->template bitwise<detail::bit_or>(other);
+        this->template bitwise(other, [](auto x, auto y){
+            return x | y;
+        });
         return *this;
     }
     
     this_type& operator ^= (this_type const& other ) noexcept
     {
-        this->template bitwise<detail::bit_xor>(other);
+        this->template bitwise(other, [](auto x, auto y){
+            return x ^ y;
+        });
         return *this;
     }
     
