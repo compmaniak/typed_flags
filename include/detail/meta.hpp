@@ -29,16 +29,7 @@ struct empty;
 // Sequence of name_index entities
 //
 template<typename Head=empty, typename... Tail>
-struct name_index_sequence
-{
-    static constexpr size_t length = 1 + sizeof...(Tail);
-};
-
-template<>
-struct name_index_sequence<empty>
-{
-    static constexpr size_t length = 0;
-};
+struct name_index_sequence;
 
 template<typename T, typename... Args>
 struct to_name_index_sequence;
@@ -106,17 +97,6 @@ struct index_getter<T, name_index_sequence<Args...>>
         (index{} << ... << (std::is_same<T, typename Args::type>
             ::value ? index{Args::index} : index{})));
 };
-
-//
-// Helper function for getting type index with compile-time assertion
-//
-template<typename T, typename Seq>
-constexpr size_t get_index()
-{
-    using getter = index_getter<T, Seq>;
-    static_assert(getter::value < Seq::length, "Index is not defined");
-    return getter::value;
-}
 
 } // namespace tfl::detail
 

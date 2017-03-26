@@ -220,7 +220,9 @@ public:
     template<typename T>
     static constexpr size_t index() noexcept
     {
-        return detail::get_index<T, layout_type>();
+        using getter = detail::index_getter<T, layout_type>;
+        static_assert(getter::value < length, "Index is not defined");
+        return getter::value;
     }
     
     //! @}
