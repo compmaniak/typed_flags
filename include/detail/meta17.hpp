@@ -23,12 +23,10 @@ struct name_index
     static constexpr size_t index = N;
 };
 
-struct empty;
-
 //
 // Sequence of name_index entities
 //
-template<typename Head=empty, typename... Tail>
+template<typename... Args>
 struct name_index_sequence;
 
 template<typename T, typename... Args>
@@ -61,15 +59,6 @@ struct is_unique
 
 template<typename T, typename U>
 struct index_getter;
-
-//
-// List is empty, so type index is -1
-//
-template<typename T>
-struct index_getter<T, name_index_sequence<empty>>
-{
-    static constexpr size_t value = -1;
-};
 
 struct index
 {
