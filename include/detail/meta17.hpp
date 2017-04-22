@@ -13,21 +13,6 @@
 namespace tfl::detail
 {
 
-template<typename T, size_t N>
-struct name_index;
-
-template<typename... Args>
-struct name_index_sequence;
-
-template<typename T, typename... Args>
-struct to_name_index_sequence;
-
-template<size_t... I, typename... Args>
-struct to_name_index_sequence<std::index_sequence<I...>, Args...>
-{
-    typedef name_index_sequence<name_index<Args, I>...> type;
-};
-
 template<typename T, typename... Args>
 struct counter
 {
@@ -47,16 +32,22 @@ constexpr index operator << (index lhs, index rhs)
     return lhs < rhs ? lhs : rhs;
 }
 
-template<typename T, typename U>
-struct index_getter;
+template<typename T, typename U, typename... Args>
+struct index_of_impl;
 
 template<typename T, size_t... I, typename... Args>
-struct index_getter<T, name_index_sequence<name_index<Args, I>...>>
+struct index_of_impl<T, std::index_sequence<I...>, Args...>
 {
-    static constexpr size_t value = (index(-1) << ... << (
-        std::is_same<T, Args>::value ? index(I) : index(-1)));
+    static constexpr size_t value = 
+        (index(-1) << ... << index(std::is_same<T, Args>::value ? I : -1));
 };
-
+    
+template<typename T, typename... Args>
+struct index_of
+{
+    static constexpr size_t value = index_of_impl<
+        T, std::make_index_sequence<sizeof...(Args)>, Args...>::value;
+};
 } // namespace tfl::detail
 
 #endif

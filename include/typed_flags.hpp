@@ -67,11 +67,7 @@ class typed_flags: private detail::flags_storage<sizeof...(Args)>
 {
     static_assert(detail::is_unique<Args...>::value, 
         "Flag types are not unique.");
-    
-    typedef typename detail::to_name_index_sequence<
-        std::make_index_sequence<sizeof...(Args)>,
-        Args...>::type layout_type;
-        
+            
     typedef typed_flags<Args...> this_type;
     
     typedef detail::flags_storage<sizeof...(Args)> parent_type;
@@ -220,7 +216,7 @@ public:
     template<typename T>
     static constexpr size_t index() noexcept
     {
-        using getter = detail::index_getter<T, layout_type>;
+        using getter = detail::index_of<T, Args...>;
         static_assert(getter::value < length, "Index is not defined");
         return getter::value;
     }

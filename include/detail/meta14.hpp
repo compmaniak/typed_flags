@@ -13,22 +13,7 @@
 namespace tfl::detail
 {
 
-template<typename T, size_t N>
-struct name_index;
-
 struct empty;
-
-template<typename Head=empty, typename... Tail>
-struct name_index_sequence;
-
-template<typename T, typename... Args>
-struct to_name_index_sequence;
-
-template<size_t... I, typename... Args>
-struct to_name_index_sequence<std::index_sequence<I...>, Args...>
-{
-    typedef name_index_sequence<name_index<Args, I>...> type;
-};
 
 template<typename T, typename Head=empty, typename... Tail>
 struct counter
@@ -56,25 +41,28 @@ struct is_unique<empty>
     static constexpr bool value = true;
 };
 
-template<typename T, typename U>
-struct index_getter;
+template<typename T, size_t I, typename H=empty, typename... Args>
+struct index_of_impl
+{
+    static constexpr size_t value = index_of_impl<T, I + 1, Args...>::value;
+};
 
-template<typename T>
-struct index_getter<T, name_index_sequence<empty>>
+template<typename T, size_t I, typename... Args>
+struct index_of_impl<T, I, T, Args...>
+{
+    static constexpr size_t value = I;
+};
+
+template<typename T, size_t I>
+struct index_of_impl<T, I, empty>
 {
     static constexpr size_t value = -1;
 };
 
-template<typename T, size_t N, typename... Tail>
-struct index_getter<T, name_index_sequence<name_index<T, N>, Tail...>>
+template<typename T, typename... Args>
+struct index_of
 {
-    static constexpr size_t value = N;
-};
-
-template<typename T, typename U, size_t N, typename... Tail>
-struct index_getter<T, name_index_sequence<name_index<U, N>, Tail...>>
-{
-    static constexpr size_t value = index_getter<T, name_index_sequence<Tail...>>::value;
+    static constexpr size_t value = index_of_impl<T, 0, Args...>::value;
 };
 
 } // namespace tfl::detail
