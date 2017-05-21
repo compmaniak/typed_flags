@@ -9,6 +9,7 @@
 
 #include "detail/flags_storage.hpp"
 #include "detail/meta.hpp"
+#include <functional>
 
 namespace tfl
 {
@@ -56,29 +57,64 @@ public:
 namespace detail
 {
 
-#if __cplusplus > 201402L
-
-#else
-
-template<typename Derived>
+template<typename D>
 class typed_flags_facet
 {
 private:
 
-    Derived& as_derived() noexcept {
-        return static_cast<Derived&>(*this);
+    D& this_() noexcept {
+        return static_cast<D&>(*this);
     }
 
-    Derived const& as_derived() const noexcept {
-        return static_cast<Derived const&>(*this);
+    D const& this_() const noexcept {
+        return static_cast<D const&>(*this);
     }
 
 public:
 
+#if __cplusplus > 201402L
+    
+    template<typename... T>
+    bool none() const noexcept {
+        return (... && (!this_().template test<T>()));
+    }
+
+    template<typename... T>
+    bool all() const noexcept {
+        return (... && ( this_().template test<T>()));
+    }
+
+    template<typename... T>
+    void set(bool value = true) noexcept {
+        (..., (this_().set_bit(D::template index<T>(), value)));
+    }
+
+    template<typename... T>
+    void set(flag<T>... flags) noexcept {
+        (..., (this_().set_bit(D::template index<T>(), flags)));
+    }
+
+    template<typename... T>
+    void get(flag<T>&... flags) const noexcept {
+        (..., (flags = this_().template test<T>()));
+    }
+
+    template<typename... T>
+    void reset() noexcept {
+        (..., (this_().set_bit(D::template index<T>(), false)));
+    }
+
+    template<typename... T>
+    void flip() noexcept {
+        (..., (this_().set_bit(D::template index<T>(), !this_().template test<T>())));
+    }
+    
+#else
+
     template<typename... T>
     bool none() const noexcept {
         bool r = true;
-        int _[] = { 0, (r = r && !as_derived().template test<T>(), 0)... };
+        int _[] = {0, (r = r && !this_().template test<T>(), 0)...};
         (void)_;
         return r;
     }
@@ -86,45 +122,46 @@ public:
     template<typename... T>
     bool all() const noexcept {
         bool r = true;
-        int _[] = { 0, (r = r &&  as_derived().template test<T>(), 0)... };
+        int _[] = {0, (r = r &&  this_().template test<T>(), 0)...};
         (void)_;
         return r;
     }
 
     template<typename... T>
     void set(bool value = true) noexcept {
-        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), value), 0)... };
+        int _[] = {0, (this_().set_bit(D::template index<T>(), value), 0)...};
         (void)_;
     }
 
     template<typename... T>
     void set(flag<T>... flags) noexcept {
-        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), flags), 0)... };
+        int _[] = {0, (this_().set_bit(D::template index<T>(), flags), 0)...};
         (void)_;
     }
 
     template<typename... T>
     void get(flag<T>&... flags) const noexcept {
-        int _[] = { 0, (flags = as_derived().template test<T>(), 0)... };
+        int _[] = {0, (flags = this_().template test<T>(), 0)...};
         (void)_;
     }
 
     template<typename... T>
     void reset() noexcept {
-        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), false), 0)... };
+        int _[] = {0, (this_().set_bit(D::template index<T>(), false), 0)...};
         (void)_;
     }
 
     template<typename... T>
     void flip() noexcept {
-        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), !as_derived().template test<T>()), 0)... };
+        int _[] = {0, (this_().set_bit(D::template index<T>(), !this_().template test<T>()), 0)...};
         (void)_;
     }
-};
 
 #endif
 
-}
+};
+
+} // namespace detail
 
 //!
 //! @brief Type-safe flag container.
@@ -385,25 +422,19 @@ public:
     
     this_type& operator &= (this_type const& other ) noexcept
     {
-        this->bitwise(other, [](auto x, auto y){
-            return x & y;
-        });
+        this->bitwise(other, std::bit_and<>{});
         return *this;
     }
     
     this_type& operator |= (this_type const& other ) noexcept
     {
-        this->bitwise(other, [](auto x, auto y){
-            return x | y;
-        });
+        this->bitwise(other, std::bit_or<>{});
         return *this;
     }
     
     this_type& operator ^= (this_type const& other ) noexcept
     {
-        this->bitwise(other, [](auto x, auto y){
-            return x ^ y;
-        });
+        this->bitwise(other, std::bit_xor<>{});
         return *this;
     }
     
