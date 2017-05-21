@@ -10,7 +10,9 @@
 #include <cstddef>
 #include <utility>
 
-namespace tfl::detail
+namespace tfl
+{
+namespace detail
 {
 
 struct empty;
@@ -65,6 +67,7 @@ struct index_of
     static constexpr size_t value = index_of_impl<T, 0, Args...>::value;
 };
 
-} // namespace tfl::detail
+} // namespace detail
+} // namespace tfl
 
 #endif

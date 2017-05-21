@@ -53,6 +53,79 @@ public:
     //! @}
 };
 
+namespace detail
+{
+
+#if __cplusplus > 201402L
+
+#else
+
+template<typename Derived>
+class typed_flags_facet
+{
+private:
+
+    Derived& as_derived() noexcept {
+        return static_cast<Derived&>(*this);
+    }
+
+    Derived const& as_derived() const noexcept {
+        return static_cast<Derived const&>(*this);
+    }
+
+public:
+
+    template<typename... T>
+    bool none() const noexcept {
+        bool r = true;
+        char _[] = { 0, (r = r && !as_derived().test<T>(), 0)... };
+        (void)_;
+        return r;
+    }
+
+    template<typename... T>
+    bool all() const noexcept {
+        bool r = true;
+        char _[] = { 0, (r = r &&  as_derived().test<T>(), 0)... };
+        (void)_;
+        return r;
+    }
+
+    template<typename... T>
+    void set(bool value = true) noexcept {
+        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), value), 0)... };
+        (void)_;
+    }
+
+    template<typename... T>
+    void set(flag<T>... flags) noexcept {
+        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), flags), 0)... };
+        (void)_;
+    }
+
+    template<typename... T>
+    void get(flag<T>&... flags) const noexcept {
+        char _[] = { 0, (flags = as_derived().test<T>(), 0)... };
+        (void)_;
+    }
+
+    template<typename... T>
+    void reset() noexcept {
+        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), false), 0)... };
+        (void)_;
+    }
+
+    template<typename... T>
+    void flip() noexcept {
+        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), !as_derived().test<T>()), 0)... };
+        (void)_;
+    }
+};
+
+#endif
+
+}
+
 //!
 //! @brief Type-safe flag container.
 //!
@@ -63,15 +136,18 @@ public:
 //! @note Types can be incomplete.
 //!
 template<typename... Args>
-class typed_flags: private detail::flags_storage<sizeof...(Args)>
+class typed_flags: 
+    private detail::flags_storage<sizeof...(Args)>,
+    private detail::typed_flags_facet<typed_flags<Args...>>
 {
-    static_assert(detail::is_unique<Args...>::value, 
-        "Flag types are not unique.");
-            
     typedef typed_flags<Args...> this_type;
-    
     typedef detail::flags_storage<sizeof...(Args)> parent_type;
-    
+    typedef detail::typed_flags_facet<this_type> facet_type;
+
+    friend class facet_type;
+
+    static_assert(detail::is_unique<Args...>::value, "Flag types are not unique.");
+
 public:
 
     using parent_type::set;
@@ -83,13 +159,20 @@ public:
     using parent_type::to_integral;
     using parent_type::to_string;
 
+    using facet_type::none;
+    using facet_type::all;
+    using facet_type::set;
+    using facet_type::get;
+    using facet_type::reset;
+    using facet_type::flip;
+
     //! @name Creation
     //! @{
     
     //!
     //! Sets all flags to zero.
     //!
-    typed_flags() = default;
+    typed_flags() {};
     
     //!
     //! Sets concrete flags to corresponding values.
@@ -120,13 +203,11 @@ public:
     //! @param one character representing set flag (optional).
     //! @throws std::invalid_argument if character is neither zero nor one.
     //!
-    template<class CharT>
-    explicit typed_flags(const CharT* str, typename 
-        std::basic_string<CharT>::size_type n = std::basic_string<CharT>::npos,
-        CharT zero = CharT('0'), CharT one = CharT('1'))
-        : parent_type(n == std::basic_string<CharT>::npos 
-                      ? detail::string_view<CharT>(str)
-                      : detail::string_view<CharT>(str, n), zero, one)
+    template<typename CharT, typename Traits = std::char_traits<CharT>>
+    explicit typed_flags(const CharT* str, size_t n = -1, 
+        CharT zero = CharT('0'), 
+        CharT one  = CharT('1'))
+        : parent_type(str, (n == -1 ? Traits::length(str) : n), zero, one)
     {}
     
     //! @}
@@ -150,11 +231,10 @@ public:
     //! @returns true if every specified flag is unset, false otherwise.
     //! @note Invoking none() without template parameters checks all flags are equal to zero.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    bool none() const noexcept
-    {
-        return (... && !this->get_bit(index<T>()));
-    }
+    bool none() const noexcept;
+#endif
     
     //!
     //! Checks that at least one of specified flags is set.
@@ -174,38 +254,31 @@ public:
     //! @returns true if every specified flag is set, false otherwise.
     //! @note Invoking all() without template parameters checks all flags are equal to one.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    bool all() const noexcept
-    {
-        return (... && this->get_bit(index<T>()));
-    }
+    bool all() const noexcept;
+#endif
     
     //!
     //! Extracts values of specified flags to variables.
     //! @param flag<T>&... flag variables to store result.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    void get(flag<T>&... flags) const noexcept
-    {
-        (..., (flags = this->get_bit(index<T>())));
-    }
+    void get(flag<T>&... flags) const noexcept;
+#endif
     
     //! @}
     //! @name Capacity
     //! @{
         
     //!
-    //! Number of flags i.e. template parameters.
-    //!
-    static constexpr size_t length = sizeof...(Args);
-    
-    //!
     //! Get the number of flags.
     //! @returns typed_flags<Args...>::length
     //!
-    constexpr size_t size() const noexcept
+    static constexpr size_t size() noexcept
     {
-        return length;
+        return sizeof...(Args);
     }
     
     //!
@@ -217,7 +290,7 @@ public:
     static constexpr size_t index() noexcept
     {
         using getter = detail::index_of<T, Args...>;
-        static_assert(getter::value < length, "Index is not defined");
+        static_assert(getter::value < size(), "Index is not defined");
         return getter::value;
     }
     
@@ -229,42 +302,38 @@ public:
     //! Sets specified flags from flag variables.
     //! @param flag<T>... flag variables to load from.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    void set(flag<T>... flags) noexcept
-    {
-        (..., this->set_bit(index<T>(), flags));
-    }
+    void set(flag<T>... flags) noexcept;
+#endif
     
     //!
     //! Changes specified flags.
     //! @param T... flag types.
     //! @param value sets flags to this value.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    void set(bool value = true) noexcept
-    {
-        (..., this->set_bit(index<T>(), value));
-    }
+    void set(bool value = true) noexcept;
+#endif
     
     //!
     //! Unsets specified flags.
     //! @param T... flag types.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    void reset() noexcept
-    {
-        (..., this->set_bit(index<T>(), false));
-    }
+    void reset() noexcept;
+#endif
     
     //!
     //! Reverts specified flags i.e. zeros becomes ones and vice versa.
     //! @param T... flag types.
     //!
+#ifdef DOXYGEN_WORKAROUND
     template<typename... T>
-    void flip() noexcept
-    {
-        (..., this->set_bit(index<T>(), !this->get_bit(index<T>())));
-    }
+    void flip() noexcept;
+#endif
     
     //! @}
     //! @name Conversions
@@ -290,9 +359,9 @@ public:
     //! @returns std::basic_string<CharT, Traits, Allocator> 
     //!
 #ifdef DOXYGEN_WORKAROUND
-    template<class CharT = char,
-             class Traits = std::char_traits<CharT>,
-             class Allocator = std::allocator<CharT>> 
+    template<typename CharT = char,
+             typename Traits = std::char_traits<CharT>,
+             typename Allocator = std::allocator<CharT>>
     auto to_string(CharT zero = CharT('0'), CharT one = CharT('1')) const;
 #endif
     
@@ -316,7 +385,7 @@ public:
     
     this_type& operator &= (this_type const& other ) noexcept
     {
-        this->template bitwise(other, [](auto x, auto y){
+        this->bitwise(other, [](auto x, auto y){
             return x & y;
         });
         return *this;
@@ -324,7 +393,7 @@ public:
     
     this_type& operator |= (this_type const& other ) noexcept
     {
-        this->template bitwise(other, [](auto x, auto y){
+        this->bitwise(other, [](auto x, auto y){
             return x | y;
         });
         return *this;
@@ -332,7 +401,7 @@ public:
     
     this_type& operator ^= (this_type const& other ) noexcept
     {
-        this->template bitwise(other, [](auto x, auto y){
+        this->bitwise(other, [](auto x, auto y){
             return x ^ y;
         });
         return *this;
