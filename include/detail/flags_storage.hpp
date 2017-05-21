@@ -34,27 +34,24 @@ class flags_storage
     // Number of elements in storage array
     static constexpr size_t bank_count = N / bank_bits + (N % bank_bits != 0);
     
-    // Total size of storage in bytes
-    static constexpr size_t storage_size = bank_count * sizeof(bank_type);
-    
     // Bit mask for last bank
     static constexpr bank_type bank_mask = N % bank_bits != 0
                      ? bank_type(~(size_t(-1) << (N % bank_bits))) 
                      : bank_type(-1);
                      
-    template<typename T>
-    std::enable_if_t<storage_size == 0> init(T /*data*/) noexcept
+    template<size_t S, typename T>
+    std::enable_if_t<S == 0> init(T /*data*/) noexcept
     {}
     
-    template<typename T>
-    std::enable_if_t<0 < storage_size && storage_size <= sizeof(T)> init(T data) noexcept
+    template<size_t S, typename T>
+    std::enable_if_t<0 < S && S <= sizeof(T)> init(T data) noexcept
     {
-        memcpy(m_data.data(), &data, storage_size);
+        memcpy(m_data.data(), &data, S);
         m_data.back() &= bank_mask;
     }
     
-    template<typename T>
-    std::enable_if_t<sizeof(T) < storage_size> init(T data) noexcept
+    template<size_t S, typename T>
+    std::enable_if_t<sizeof(T) < S> init(T data) noexcept
     {
         reset();
         memcpy(m_data.data(), &data, sizeof(T));
@@ -69,7 +66,7 @@ public:
     
     explicit flags_storage(unsigned long long data) noexcept
     {
-        init(data);
+        init<bank_count * sizeof(bank_type)>(data);
     }
     
     template<class CharT>

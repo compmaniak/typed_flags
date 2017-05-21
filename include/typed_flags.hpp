@@ -78,7 +78,7 @@ public:
     template<typename... T>
     bool none() const noexcept {
         bool r = true;
-        char _[] = { 0, (r = r && !as_derived().test<T>(), 0)... };
+        int _[] = { 0, (r = r && !as_derived().template test<T>(), 0)... };
         (void)_;
         return r;
     }
@@ -86,38 +86,38 @@ public:
     template<typename... T>
     bool all() const noexcept {
         bool r = true;
-        char _[] = { 0, (r = r &&  as_derived().test<T>(), 0)... };
+        int _[] = { 0, (r = r &&  as_derived().template test<T>(), 0)... };
         (void)_;
         return r;
     }
 
     template<typename... T>
     void set(bool value = true) noexcept {
-        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), value), 0)... };
+        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), value), 0)... };
         (void)_;
     }
 
     template<typename... T>
     void set(flag<T>... flags) noexcept {
-        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), flags), 0)... };
+        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), flags), 0)... };
         (void)_;
     }
 
     template<typename... T>
     void get(flag<T>&... flags) const noexcept {
-        char _[] = { 0, (flags = as_derived().test<T>(), 0)... };
+        int _[] = { 0, (flags = as_derived().template test<T>(), 0)... };
         (void)_;
     }
 
     template<typename... T>
     void reset() noexcept {
-        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), false), 0)... };
+        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), false), 0)... };
         (void)_;
     }
 
     template<typename... T>
     void flip() noexcept {
-        char _[] = { 0, (as_derived().set_bit(Derived::index<T>(), !as_derived().test<T>()), 0)... };
+        int _[] = { 0, (as_derived().set_bit(Derived::template index<T>(), !as_derived().template test<T>()), 0)... };
         (void)_;
     }
 };
@@ -144,7 +144,7 @@ class typed_flags:
     typedef detail::flags_storage<sizeof...(Args)> parent_type;
     typedef detail::typed_flags_facet<this_type> facet_type;
 
-    friend class facet_type;
+    friend class detail::typed_flags_facet<this_type>;
 
     static_assert(detail::is_unique<Args...>::value, "Flag types are not unique.");
 
@@ -207,7 +207,7 @@ public:
     explicit typed_flags(const CharT* str, size_t n = -1, 
         CharT zero = CharT('0'), 
         CharT one  = CharT('1'))
-        : parent_type(str, (n == -1 ? Traits::length(str) : n), zero, one)
+        : parent_type(str, (n == size_t(-1) ? Traits::length(str) : n), zero, one)
     {}
     
     //! @}
@@ -245,7 +245,7 @@ public:
     template<typename... T>
     bool any() const noexcept
     {
-        return !none<T...>();
+        return !this->template none<T...>();
     }
     
     //!
