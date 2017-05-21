@@ -12,13 +12,11 @@
 #include <string>
 #include <cstring>
 #include <stdexcept>
-#include <experimental/string_view>
 
-namespace tfl::detail
+namespace tfl
 {
-
-template<typename T>
-using string_view = std::experimental::basic_string_view<T>;
+namespace detail
+{
 
 //
 // Class storing bits in continuous array similar to std::bitset.
@@ -38,9 +36,27 @@ class flags_storage
     
     // Bit mask for last bank
     static constexpr bank_type bank_mask = N % bank_bits != 0
-                     ? bank_type(~(bank_type(-1) << (N % bank_bits))) 
+                     ? bank_type(~(size_t(-1) << (N % bank_bits))) 
                      : bank_type(-1);
-        
+                     
+    template<size_t S, typename T>
+    std::enable_if_t<S == 0> init(T /*data*/) noexcept
+    {}
+    
+    template<size_t S, typename T>
+    std::enable_if_t<0 < S && S <= sizeof(T)> init(T data) noexcept
+    {
+        memcpy(m_data.data(), &data, S);
+        m_data.back() &= bank_mask;
+    }
+    
+    template<size_t S, typename T>
+    std::enable_if_t<sizeof(T) < S> init(T data) noexcept
+    {
+        reset();
+        memcpy(m_data.data(), &data, sizeof(T));
+    }
+    
 public:
 
     flags_storage() noexcept
@@ -50,27 +66,15 @@ public:
     
     explicit flags_storage(unsigned long long data) noexcept
     {
-        // TODO use 'constexpr if' after some time
-        constexpr auto this_size = bank_count * sizeof(bank_type);
-        if (this_size > sizeof(data))
-        {
-            reset();
-            memcpy(m_data.data(), &data, sizeof(data));
-        }
-        else if (this_size > 0)
-        {
-            memcpy(m_data.data(), &data, this_size);
-            m_data.back() &= bank_mask;
-        }
+        init<bank_count * sizeof(bank_type)>(data);
     }
     
     template<class CharT>
-    explicit flags_storage(string_view<CharT> src,
-        CharT zero = CharT('0'), CharT one = CharT('1'))
+    explicit flags_storage(CharT const* src, size_t n, CharT zero, CharT one)
     {
         reset();
         size_t i = 0;
-        for (auto it = src.rbegin(); it != src.rend() && i < N; ++it, ++i)
+        for (auto it = src + n - 1; i < n && i < N; --it, ++i)
             if (*it == one)
                 set_bit(i, true);
             else if (*it != zero)
@@ -115,7 +119,7 @@ public:
     bool get_bit(size_t n) const noexcept
     {
         auto const mask = bank_type(1) << (n % bank_bits);
-        return m_data[n / bank_bits] & mask;
+        return (m_data[n / bank_bits] & mask) > 0;
     }
         
     bool none() const noexcept
@@ -149,8 +153,8 @@ public:
     template<typename T>
     T to_integral() const noexcept
     {
-        static_assert(std::is_integral<T>::value);
-        static_assert(sizeof(T) * 8 >= N);
+        static_assert(std::is_integral<T>::value, "T is not an intergal type");
+        static_assert(sizeof(T) * 8 >= N, "T can't hold all flags");
         T res = 0;
         // TODO use 'constexpr if' after some time
         if (!m_data.empty())
@@ -186,7 +190,7 @@ public:
         auto it1 = m_data.begin();
         auto it2 = other.m_data.begin();
         for (auto last = m_data.end(); it1 != last; ++it1, ++it2)
-            *it1 = fn(*it1, *it2);
+            *it1 = static_cast<bank_type>(fn(*it1, *it2));
     }
         
 private:
@@ -194,6 +198,7 @@ private:
     std::array<bank_type, bank_count> m_data;
 };
 
-} // namespace tfl::detail
+} // namespace detail
+} // namespace tfl
 
 #endif
