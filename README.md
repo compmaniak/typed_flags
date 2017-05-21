@@ -1,5 +1,6 @@
 # Typed flags
 [![Build Status](https://travis-ci.org/compmaniak/typed_flags.svg?branch=master)](https://travis-ci.org/compmaniak/typed_flags)
+[![Build status](https://ci.appveyor.com/api/projects/status/kyrm1lmn2ciaxbel?svg=true)](https://ci.appveyor.com/project/compmaniak/typed-flags)
 [![Try online](https://img.shields.io/badge/Try-online-4DB6AC.svg)](http://melpon.org/wandbox/permlink/55g1czUjwSFO8LS1)
 
 Type-safe and human-readable sets of bool flags.
