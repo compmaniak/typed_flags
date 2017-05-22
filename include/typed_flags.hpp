@@ -8,7 +8,11 @@
 #define _TFL_TYPED_FLAGS_HPP_
 
 #include "detail/flags_storage.hpp"
-#include "detail/meta.hpp"
+#if __cplusplus > 201402L
+#include "detail/meta17.hpp"
+#else
+#include "detail/meta14.hpp"
+#endif
 #include <functional>
 
 namespace tfl
@@ -54,114 +58,11 @@ public:
     //! @}
 };
 
-namespace detail
-{
-
-template<typename D>
-class typed_flags_facet
-{
-private:
-
-    D& this_() noexcept {
-        return static_cast<D&>(*this);
-    }
-
-    D const& this_() const noexcept {
-        return static_cast<D const&>(*this);
-    }
-
-public:
-
 #if __cplusplus > 201402L
-    
-    template<typename... T>
-    bool none() const noexcept {
-        return (... && (!this_().template test<T>()));
-    }
-
-    template<typename... T>
-    bool all() const noexcept {
-        return (... && ( this_().template test<T>()));
-    }
-
-    template<typename... T>
-    void set(bool value = true) noexcept {
-        (..., (this_().set_bit(D::template index<T>(), value)));
-    }
-
-    template<typename... T>
-    void set(flag<T>... flags) noexcept {
-        (..., (this_().set_bit(D::template index<T>(), flags)));
-    }
-
-    template<typename... T>
-    void get(flag<T>&... flags) const noexcept {
-        (..., (flags = this_().template test<T>()));
-    }
-
-    template<typename... T>
-    void reset() noexcept {
-        (..., (this_().set_bit(D::template index<T>(), false)));
-    }
-
-    template<typename... T>
-    void flip() noexcept {
-        (..., (this_().set_bit(D::template index<T>(), !this_().template test<T>())));
-    }
-    
+#include "detail/facet17.hpp"
 #else
-
-    template<typename... T>
-    bool none() const noexcept {
-        bool r = true;
-        int _[] = {0, (r = r && !this_().template test<T>(), 0)...};
-        (void)_;
-        return r;
-    }
-
-    template<typename... T>
-    bool all() const noexcept {
-        bool r = true;
-        int _[] = {0, (r = r &&  this_().template test<T>(), 0)...};
-        (void)_;
-        return r;
-    }
-
-    template<typename... T>
-    void set(bool value = true) noexcept {
-        int _[] = {0, (this_().set_bit(D::template index<T>(), value), 0)...};
-        (void)_;
-    }
-
-    template<typename... T>
-    void set(flag<T>... flags) noexcept {
-        int _[] = {0, (this_().set_bit(D::template index<T>(), flags), 0)...};
-        (void)_;
-    }
-
-    template<typename... T>
-    void get(flag<T>&... flags) const noexcept {
-        int _[] = {0, (flags = this_().template test<T>(), 0)...};
-        (void)_;
-    }
-
-    template<typename... T>
-    void reset() noexcept {
-        int _[] = {0, (this_().set_bit(D::template index<T>(), false), 0)...};
-        (void)_;
-    }
-
-    template<typename... T>
-    void flip() noexcept {
-        int _[] = {0, (this_().set_bit(D::template index<T>(), !this_().template test<T>()), 0)...};
-        (void)_;
-    }
-
+#include "detail/facet14.hpp"
 #endif
-
-};
-
-} // namespace detail
 
 //!
 //! @brief Type-safe flag container.
