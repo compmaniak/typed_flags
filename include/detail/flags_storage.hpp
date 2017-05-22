@@ -12,6 +12,7 @@
 #include <string>
 #include <cstring>
 #include <stdexcept>
+#include <algorithm>
 
 namespace tfl
 {
@@ -57,6 +58,14 @@ class flags_storage
         memcpy(m_data.data(), &data, sizeof(T));
     }
     
+    template<int I>
+    struct is_equal_to
+    {
+        bool operator()(bank_type v) const noexcept {
+            return v == bank_type(I);
+        }
+    };
+    
 public:
 
     flags_storage() noexcept
@@ -73,12 +82,14 @@ public:
     explicit flags_storage(CharT const* src, size_t n, CharT zero, CharT one)
     {
         reset();
-        size_t i = 0;
-        for (auto it = src + n - 1; i < n && i < N; --it, ++i)
-            if (*it == one)
-                set_bit(i, true);
-            else if (*it != zero)
+        auto it = src + n;
+        for (size_t k = 0; k < n && k < N; ++k) {
+            CharT const ch = *--it;
+            if (ch == one)
+                set_bit(k, true);
+            else if (ch != zero)
                 throw std::invalid_argument("Char is not zero or one");
+        }
     }
     
     //
@@ -95,15 +106,13 @@ public:
     
     void set() noexcept
     {        
-        for (auto& bank : m_data)
-            bank = bank_type(-1);
+        std::fill(m_data.begin(), m_data.end(), -1);
         m_data.back() &= bank_mask;
     }
     
     void reset() noexcept
     {
-        for (auto& bank : m_data)
-            bank = 0;
+        std::fill(m_data.begin(), m_data.end(), 0);
     }
     
     void flip() noexcept
@@ -124,10 +133,7 @@ public:
         
     bool none() const noexcept
     {
-        for (auto& bank : m_data)
-            if (bank != 0)
-                return false;
-        return true;
+        return std::all_of(m_data.begin(), m_data.end(), is_equal_to<0>{});
     }
     
     bool any() const noexcept
@@ -140,11 +146,9 @@ public:
         // TODO use 'constexpr if' after some time
         if (m_data.empty())
             return false;
-        auto it = m_data.begin();
-        for (auto last = m_data.end() - 1; it != last; ++it)
-            if (*it != bank_type(-1))
-                return false;
-        return *it == bank_mask;
+        if (!std::all_of(m_data.begin(), m_data.end() - 1, is_equal_to<-1>{}))
+            return false;
+        return m_data.back() == bank_mask;
     }
     
     //
@@ -187,10 +191,8 @@ public:
     template<typename BinFn>
     void bitwise(flags_storage<N> const& other, BinFn&& fn) noexcept
     {
-        auto it1 = m_data.begin();
-        auto it2 = other.m_data.begin();
-        for (auto last = m_data.end(); it1 != last; ++it1, ++it2)
-            *it1 = static_cast<bank_type>(fn(*it1, *it2));
+        std::transform(m_data.begin(), m_data.end(), other.m_data.begin(),
+                       m_data.begin(), fn);
     }
         
 private:
